@@ -4178,7 +4178,842 @@ public class MainActivity extends Activity {
 
                 invalidate();
             }
-                                     }
+                     // =========================
+        // GAME HUD
+        // =========================
+
+        private void drawHUD(Canvas canvas) {
+
+            int w = getWidth();
+
+            // Top dark panel
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(
+                    Color.argb(
+                            175,
+                            0,
+                            0,
+                            0
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    15,
+                    15,
+                    w - 15,
+                    105,
+                    20,
+                    20,
+                    paint
+            );
+
+            paint.setTypeface(
+                    Typeface.create(
+                            Typeface.DEFAULT,
+                            Typeface.BOLD
+                    )
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.LEFT
+            );
+
+            // SCORE
+            paint.setTextSize(18);
+            paint.setColor(Color.WHITE);
+
+            canvas.drawText(
+                    "SCORE",
+                    30,
+                    42,
+                    paint
+            );
+
+            paint.setTextSize(25);
+            paint.setColor(
+                    Color.rgb(
+                            255,
+                            220,
+                            60
+                    )
+            );
+
+            canvas.drawText(
+                    String.valueOf(score),
+                    30,
+                    73,
+                    paint
+            );
+
+            // COINS
+            paint.setTextSize(18);
+            paint.setColor(Color.WHITE);
+
+            canvas.drawText(
+                    "COINS",
+                    165,
+                    42,
+                    paint
+            );
+
+            paint.setTextSize(25);
+            paint.setColor(
+                    Color.rgb(
+                            255,
+                            200,
+                            30
+                    )
+            );
+
+            canvas.drawText(
+                    String.valueOf(coins),
+                    165,
+                    73,
+                    paint
+            );
+
+            // LEVEL
+            paint.setTextSize(18);
+            paint.setColor(Color.WHITE);
+
+            canvas.drawText(
+                    "LVL",
+                    285,
+                    42,
+                    paint
+            );
+
+            paint.setTextSize(25);
+            paint.setColor(
+                    Color.rgb(
+                            80,
+                            220,
+                            255
+                    )
+            );
+
+            canvas.drawText(
+                    String.valueOf(level),
+                    285,
+                    73,
+                    paint
+            );
+
+            // LIVES
+            paint.setTextSize(18);
+            paint.setColor(Color.WHITE);
+
+            canvas.drawText(
+                    "LIVES",
+                    365,
+                    42,
+                    paint
+            );
+
+            paint.setTextSize(24);
+            paint.setColor(
+                    Color.RED
+            );
+
+            String hearts = "";
+
+            for (int i = 0;
+                    i < lives;
+                    i++) {
+
+                hearts += "♥";
+            }
+
+            canvas.drawText(
+                    hearts,
+                    365,
+                    74,
+                    paint
+            );
+
+            // DISTANCE
+            paint.setTextAlign(
+                    Paint.Align.RIGHT
+            );
+
+            paint.setTextSize(17);
+            paint.setColor(Color.WHITE);
+
+            canvas.drawText(
+                    "DISTANCE",
+                    w - 180,
+                    42,
+                    paint
+            );
+
+            paint.setTextSize(22);
+            paint.setColor(
+                    Color.rgb(
+                            100,
+                            255,
+                            150
+                    )
+            );
+
+            canvas.drawText(
+                    ((int) distance)
+                            + " m",
+                    w - 180,
+                    73,
+                    paint
+            );
+
+            // SPEED
+            paint.setTextSize(17);
+            paint.setColor(Color.WHITE);
+
+            canvas.drawText(
+                    "SPEED",
+                    w - 80,
+                    42,
+                    paint
+            );
+
+            paint.setTextSize(22);
+            paint.setColor(
+                    Color.rgb(
+                            255,
+                            100,
+                            80
+                    )
+            );
+
+            canvas.drawText(
+                    ((int)
+                            (speed * 10))
+                            + " KM/H",
+                    w - 20,
+                    73,
+                    paint
+            );
+
+            // XP BAR
+            float xpNeeded =
+                    Math.max(
+                            1,
+                            level * 100
+                    );
+
+            float xpProgress =
+                    Math.min(
+                            1f,
+                            xp / xpNeeded
+                    );
+
+            float barLeft = 30;
+            float barRight = 220;
+            float barTop = 84;
+            float barBottom = 96;
+
+            paint.setColor(
+                    Color.argb(
+                            100,
+                            255,
+                            255,
+                            255
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    barLeft,
+                    barTop,
+                    barRight,
+                    barBottom,
+                    8,
+                    8,
+                    paint
+            );
+
+            paint.setColor(
+                    Color.rgb(
+                            80,
+                            180,
+                            255
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    barLeft,
+                    barTop,
+                    barLeft
+                            +
+                            (
+                                    barRight
+                                    -
+                                    barLeft
+                            )
+                            * xpProgress,
+                    barBottom,
+                    8,
+                    8,
+                    paint
+            );
+
+            // COMBO
+            if (combo > 1) {
+
+                paint.setTextAlign(
+                        Paint.Align.CENTER
+                );
+
+                paint.setTextSize(24);
+
+                paint.setColor(
+                        Color.rgb(
+                                255,
+                                180,
+                                30
+                        )
+                );
+
+                canvas.drawText(
+                        "COMBO x"
+                                +
+                                combo,
+                        w / 2f,
+                        135,
+                        paint
+                );
+            }
+
+            // Nitro bar
+            drawNitroBar(
+                    canvas
+            );
+        }
+
+        // =========================
+        // NITRO BAR
+        // =========================
+
+        private void drawNitroBar(
+                Canvas canvas
+        ) {
+
+            int w = getWidth();
+            int h = getHeight();
+
+            float left =
+                    w - 245;
+
+            float right =
+                    w - 30;
+
+            float top =
+                    h - 92;
+
+            float bottom =
+                    h - 76;
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setColor(
+                    Color.argb(
+                            160,
+                            0,
+                            0,
+                            0
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    left - 8,
+                    top - 24,
+                    right + 8,
+                    bottom + 30,
+                    12,
+                    12,
+                    paint
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.LEFT
+            );
+
+            paint.setTypeface(
+                    Typeface.create(
+                            Typeface.DEFAULT,
+                            Typeface.BOLD
+                    )
+            );
+
+            paint.setTextSize(16);
+
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            canvas.drawText(
+                    "NITRO",
+                    left,
+                    top - 7,
+                    paint
+            );
+
+            paint.setColor(
+                    Color.DKGRAY
+            );
+
+            canvas.drawRoundRect(
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    8,
+                    8,
+                    paint
+            );
+
+            float progress =
+                    Math.max(
+                            0f,
+                            Math.min(
+                                    1f,
+                                    nitro / 100f
+                            )
+                    );
+
+            paint.setColor(
+                    Color.rgb(
+                            0,
+                            210,
+                            255
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    left,
+                    top,
+                    left
+                            +
+                            (
+                                    right
+                                    -
+                                    left
+                            )
+                            * progress,
+                    bottom,
+                    8,
+                    8,
+                    paint
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.CENTER
+            );
+
+            paint.setTextSize(14);
+
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            canvas.drawText(
+                    ((int) nitro)
+                            + "%",
+                    (left + right) / 2f,
+                    top + 13,
+                    paint
+            );
+        }
+
+        // =========================
+        // GAME CONTROLS
+        // =========================
+
+        private void drawControls(
+                Canvas canvas
+        ) {
+
+            int w = getWidth();
+            int h = getHeight();
+
+            // LEFT BUTTON
+            drawControlButton(
+                    canvas,
+                    35,
+                    h - 130,
+                    125,
+                    h - 35,
+                    "◀"
+            );
+
+            // RIGHT BUTTON
+            drawControlButton(
+                    canvas,
+                    145,
+                    h - 130,
+                    235,
+                    h - 35,
+                    "▶"
+            );
+
+            // NITRO BUTTON
+            drawNitroButton(
+                    canvas,
+                    w - 150,
+                    h - 150,
+                    w - 35,
+                    h - 35
+            );
+
+            // PAUSE BUTTON
+            drawPauseSmallButton(
+                    canvas,
+                    w - 70,
+                    120,
+                    w - 20,
+                    170
+            );
+        }
+
+        // =========================
+        // CONTROL BUTTON
+        // =========================
+
+        private void drawControlButton(
+                Canvas canvas,
+                float left,
+                float top,
+                float right,
+                float bottom,
+                String text
+        ) {
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setColor(
+                    Color.argb(
+                            155,
+                            10,
+                            15,
+                            25
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    22,
+                    22,
+                    paint
+            );
+
+            paint.setStyle(
+                    Paint.Style.STROKE
+            );
+
+            paint.setStrokeWidth(3);
+
+            paint.setColor(
+                    Color.argb(
+                            220,
+                            255,
+                            255,
+                            255
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    22,
+                    22,
+                    paint
+            );
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.CENTER
+            );
+
+            paint.setTypeface(
+                    Typeface.DEFAULT_BOLD
+            );
+
+            paint.setTextSize(42);
+
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            canvas.drawText(
+                    text,
+                    (left + right) / 2f,
+                    (top + bottom) / 2f
+                            -
+                            (
+                                    paint.ascent()
+                                    +
+                                    paint.descent()
+                            ) / 2f,
+                    paint
+            );
+        }
+
+        // =========================
+        // NITRO BUTTON
+        // =========================
+
+        private void drawNitroButton(
+                Canvas canvas,
+                float left,
+                float top,
+                float right,
+                float bottom
+        ) {
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setColor(
+                    Color.argb(
+                            190,
+                            0,
+                            100,
+                            180
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    25,
+                    25,
+                    paint
+            );
+
+            paint.setStyle(
+                    Paint.Style.STROKE
+            );
+
+            paint.setStrokeWidth(4);
+
+            paint.setColor(
+                    Color.CYAN
+            );
+
+            canvas.drawRoundRect(
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    25,
+                    25,
+                    paint
+            );
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.CENTER
+            );
+
+            paint.setTypeface(
+                    Typeface.DEFAULT_BOLD
+            );
+
+            paint.setTextSize(20);
+
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            canvas.drawText(
+                    "NITRO",
+                    (left + right) / 2f,
+                    top + 36,
+                    paint
+            );
+
+            paint.setTextSize(32);
+
+            paint.setColor(
+                    Color.YELLOW
+            );
+
+            canvas.drawText(
+                    "⚡",
+                    (left + right) / 2f,
+                    top + 78,
+                    paint
+            );
+        }
+
+        // =========================
+        // PAUSE SMALL BUTTON
+        // =========================
+
+        private void drawPauseSmallButton(
+                Canvas canvas,
+                float left,
+                float top,
+                float right,
+                float bottom
+        ) {
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setColor(
+                    Color.argb(
+                            180,
+                            0,
+                            0,
+                            0
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    left,
+                    top,
+                    right,
+                    bottom,
+                    12,
+                    12,
+                    paint
+            );
+
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            canvas.drawRoundRect(
+                    left + 13,
+                    top + 12,
+                    left + 19,
+                    bottom - 12,
+                    3,
+                    3,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    left + 31,
+                    top + 12,
+                    left + 37,
+                    bottom - 12,
+                    3,
+                    3,
+                    paint
+            );
+        }
+
+        // =========================
+        // FINISH LINE
+        // =========================
+
+        private void drawFinishLine(
+                Canvas canvas
+        ) {
+
+            int w = getWidth();
+            int h = getHeight();
+
+            float roadLeft =
+                    w * 0.18f;
+
+            float roadRight =
+                    w * 0.82f;
+
+            float y =
+                    170;
+
+            float square =
+                    28;
+
+            for (
+                    int row = 0;
+                    row < 2;
+                    row++
+            ) {
+
+                for (
+                        int col = 0;
+                        col < 12;
+                        col++
+                ) {
+
+                    if (
+                            (row + col)
+                                    % 2
+                                    == 0
+                    ) {
+
+                        paint.setColor(
+                                Color.WHITE
+                        );
+
+                    } else {
+
+                        paint.setColor(
+                                Color.BLACK
+                        );
+                    }
+
+                    float x =
+                            roadLeft
+                            +
+                            col
+                            *
+                            (
+                                    (
+                                            roadRight
+                                            -
+                                            roadLeft
+                                    )
+                                    / 12f
+                            );
+
+                    canvas.drawRect(
+                            x,
+                            y
+                                    +
+                                    row
+                                    * square,
+                            x
+                                    +
+                                    (
+                                            (
+                                                    roadRight
+                                                    -
+                                                    roadLeft
+                                            )
+                                            / 12f
+                                    ),
+                            y
+                                    +
+                                  (
+                                            row + 1
+                                    )
+                                    * square,
+                            paint
+                    );
+                }
+            }
+        }
         private void beep(
                 int toneType
         ) {
