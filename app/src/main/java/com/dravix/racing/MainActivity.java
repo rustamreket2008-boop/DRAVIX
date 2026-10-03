@@ -2,14 +2,21 @@ package com.dravix.racing;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Build;
 import android.os.Vibrator;
-import android.os.VibrationEffect;
+import android.os.Build;
+import android.content.Context;
 import android.graphics.*;
 import android.view.*;
-import android.content.Context;
+import android.view.WindowManager;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
+
+import java.util.ArrayList;
+import java.util.Random;
 
 public class MainActivity extends Activity {
+
+    private DRAVIXGame game;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,17 +27,121 @@ public class MainActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN
         );
 
-        setContentView(new CarMenu(this));
+        game = new DRAVIXGame(this);
+        setContentView(game);
     }
 
-    public static class CarMenu extends View {
+    @Override
+    public void onBackPressed() {
+        if (game != null) {
+            game.handleBack();
+        } else {
+            super.onBackPressed();
+        }
+    }
 
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        Vibrator vibrator;
+    public static class DRAVIXGame extends View {
 
-        int selectedCar = 0;
+        // =========================
+        // SCREENS
+        // =========================
 
-        String[] cars = {
+        private static final int MENU = 0;
+        private static final int GARAGE = 1;
+        private static final int GAME = 2;
+        private static final int PAUSE = 3;
+        private static final int RESULT = 4;
+        private static final int SETTINGS = 5;
+        private static final int MISSIONS = 6;
+
+        private int screen = MENU;
+
+        // =========================
+        // BASIC
+        // =========================
+
+        private final Context context;
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Random random = new Random();
+
+        private Vibrator vibrator;
+        private ToneGenerator tone;
+
+        // =========================
+        // PLAYER
+        // =========================
+
+        private float playerX;
+        private float playerY;
+
+        private float playerWidth = 82;
+        private float playerHeight = 145;
+
+        private int selectedCar = 0;
+
+        private int lives = 3;
+
+        private float speed = 0;
+        private float nitro = 100;
+
+        private boolean nitroPressed = false;
+
+        // =========================
+        // SCORE
+        // =========================
+
+        private int score = 0;
+        private int bestScore = 0;
+        private int coins = 0;
+
+        private float distance = 0;
+
+        private int level = 1;
+        private int xp = 0;
+
+        private int combo = 0;
+        private int maxCombo = 0;
+
+        // =========================
+        // UPGRADES
+        // =========================
+
+        private int engineLevel = 1;
+        private int brakeLevel = 1;
+        private int tireLevel = 1;
+        private int armorLevel = 1;
+        private int nitroLevel = 1;
+
+        // =========================
+        // WORLD
+        // =========================
+
+        private static final int CITY = 0;
+        private static final int NIGHT = 1;
+        private static final int RAIN = 2;
+        private static final int DESERT = 3;
+        private static final int SNOW = 4;
+
+        private int weather = CITY;
+        private int roadType = 0;
+
+        // =========================
+        // RACE
+        // =========================
+
+        private boolean raceStarted = false;
+        private boolean raceFinished = false;
+
+        private int countdown = 3;
+        private long countdownStart;
+
+        private long lastTime;
+
+        // =========================
+        // CARS
+        // =========================
+
+        private final String[] carNames = {
                 "Sport Red",
                 "Sport Blue",
                 "Supercar",
@@ -40,453 +151,1028 @@ public class MainActivity extends Activity {
                 "Police",
                 "Green Racer",
                 "Neon",
-                "DRAVIX X"
+                "DRAVIX X",
+                "Shadow",
+                "Thunder",
+                "Inferno",
+                "Velocity",
+                "Phantom",
+                "Cyber GT",
+                "Road King",
+                "Lightning",
+                "Storm",
+                "Titan",
+                "Falcon",
+                "Dragon",
+                "Night Rider",
+                "X-Racer",
+                "Ultimate"
         };
 
-        int[] carColors = {
-                Color.rgb(225, 30, 45),
-                Color.rgb(30, 100, 235),
-                Color.rgb(180, 40, 230),
-                Color.rgb(245, 150, 20),
-                Color.rgb(20, 20, 25),
-                Color.rgb(230, 120, 30),
-                Color.rgb(30, 80, 220),
-                Color.rgb(30, 190, 90),
-                Color.rgb(0, 230, 255),
-                Color.rgb(255, 190, 20)
+        private final int[] carColors = {
+                Color.RED,
+                Color.BLUE,
+                Color.YELLOW,
+                Color.rgb(255, 90, 0),
+                Color.BLACK,
+                Color.GRAY,
+                Color.rgb(40, 40, 40),
+                Color.GREEN,
+                Color.CYAN,
+                Color.MAGENTA,
+                Color.DKGRAY,
+                Color.rgb(70, 70, 120),
+                Color.rgb(180, 40, 20),
+                Color.rgb(50, 150, 255),
+                Color.rgb(120, 20, 180),
+                Color.rgb(20, 220, 220),
+                Color.rgb(220, 220, 220),
+                Color.rgb(120, 220, 255),
+                Color.rgb(80, 80, 80),
+                Color.rgb(170, 170, 170),
+                Color.rgb(255, 200, 50),
+                Color.rgb(150, 30, 30),
+                Color.rgb(20, 20, 60),
+                Color.rgb(100, 255, 100),
+                Color.WHITE
         };
 
-        RectF playButton = new RectF();
+        // =========================
+        // TRAFFIC CAR
+        // =========================
 
-        public CarMenu(Context context) {
-            super(context);
+        private static class TrafficCar {
 
-            vibrator = (Vibrator)
-                    context.getSystemService(Context.VIBRATOR_SERVICE);
+            float x;
+            float y;
+
+            float width;
+            float height;
+
+            float speed;
+
+            int color;
+            int lane;
+
+            boolean police;
+            boolean truck;
+
+            boolean damaged;
         }
 
-        void vibrate() {
-            if (vibrator == null) return;
+        private final ArrayList<TrafficCar> traffic =
+                new ArrayList<>();
 
-            if (Build.VERSION.SDK_INT >= 26) {
-                vibrator.vibrate(
-                        VibrationEffect.createOneShot(
-                                100,
-                                VibrationEffect.DEFAULT_AMPLITUDE
-                        )
-                );
-            } else {
-                vibrator.vibrate(100);
+        private int trafficCount = 16;
+
+        // =========================
+        // COIN
+        // =========================
+
+        private static class Coin {
+
+            float x;
+            float y;
+
+            float radius;
+
+            int value;
+
+            boolean collected;
+        }
+
+        private final ArrayList<Coin> coinList =
+                new ArrayList<>();
+
+        // =========================
+        // PARTICLE
+        // =========================
+
+        private static class Particle {
+
+            float x;
+            float y;
+
+            float vx;
+            float vy;
+
+            float size;
+            float life;
+
+            int color;
+        }
+
+        private final ArrayList<Particle> particles =
+                new ArrayList<>();
+
+        // =========================
+        // STAR
+        // =========================
+
+        private static class Star {
+
+            float x;
+            float y;
+
+            float size;
+            float speed;
+        }
+
+        private final ArrayList<Star> stars =
+                new ArrayList<>();
+
+        // =========================
+        // BUILDING
+        // =========================
+
+        private static class Building {
+
+            float x;
+            float width;
+            float height;
+
+            int color;
+        }
+
+        private final ArrayList<Building> buildings =
+                new ArrayList<>();
+
+        // =========================
+        // MISSION
+        // =========================
+
+        private static class Mission {
+
+            String title;
+
+            int target;
+            int progress;
+            int reward;
+
+            boolean completed;
+
+            Mission(
+                    String title,
+                    int target,
+                    int reward
+            ) {
+                this.title = title;
+                this.target = target;
+                this.reward = reward;
             }
         }
 
+        private final ArrayList<Mission> missions =
+                new ArrayList<>();
+
+        // =========================
+        // BUTTONS
+        // =========================
+
+        private final RectF playButton =
+                new RectF();
+
+        private final RectF garageButton =
+                new RectF();
+
+        private final RectF missionsButton =
+                new RectF();
+
+        private final RectF settingsButton =
+                new RectF();
+
+        private final RectF leftButton =
+                new RectF();
+
+        private final RectF rightButton =
+                new RectF();
+
+        private final RectF nitroButton =
+                new RectF();
+
+        private final RectF pauseButton =
+                new RectF();
+
+        private final RectF backButton =
+                new RectF();
+
+        private final RectF upgradeButton =
+                new RectF();
+
+        private final RectF restartButton =
+                new RectF();
+
+        private final RectF menuButton =
+                new RectF();
+
+        // =========================
+        // TOUCH
+        // =========================
+
+        private float touchX;
+        private float touchY;
+
+        private boolean leftPressed;
+        private boolean rightPressed;
+
+        // =========================
+        // CONSTRUCTOR
+        // =========================
+
+        public DRAVIXGame(Context context) {
+
+            super(context);
+
+            this.context = context;
+
+            paint.setTypeface(
+                    Typeface.create(
+                            Typeface.DEFAULT,
+                            Typeface.NORMAL
+                    )
+            );
+
+            vibrator =
+                    (Vibrator)
+                            context.getSystemService(
+                                    Context.VIBRATOR_SERVICE
+                            );
+
+            try {
+
+                tone = new ToneGenerator(
+                        AudioManager.STREAM_MUSIC,
+                        70
+                );
+
+            } catch (Exception e) {
+
+                tone = null;
+            }
+
+            createMissions();
+            createStars();
+            createBuildings();
+
+            setFocusable(true);
+        }
+
+        // =========================
+        // MISSIONS
+        // =========================
+
+        private void createMissions() {
+
+            missions.clear();
+
+            missions.add(
+                    new Mission(
+                            "Drive 1000 meters",
+                            1000,
+                            100
+                    )
+            );
+
+            missions.add(
+                    new Mission(
+                            "Collect 20 coins",
+                            20,
+                            150
+                    )
+            );
+
+            missions.add(
+                    new Mission(
+                            "Reach level 5",
+                            5,
+                            250
+                    )
+            );
+
+            missions.add(
+                    new Mission(
+                            "Score 5000 points",
+                            5000,
+                            300
+                    )
+            );
+
+            missions.add(
+                    new Mission(
+                            "Use Nitro 10 times",
+                            10,
+                            200
+                    )
+            );
+
+            missions.add(
+                    new Mission(
+                            "Drive 10000 meters",
+                            10000,
+                            500
+                    )
+            );
+
+            missions.add(
+                    new Mission(
+                            "Collect 100 coins",
+                            100,
+                            600
+                    )
+            );
+        }
+
+        // =========================
+        // STARS
+        // =========================
+
+        private void createStars() {
+
+            stars.clear();
+
+            for (int i = 0; i < 120; i++) {
+
+                Star s = new Star();
+
+                s.x = random.nextFloat();
+                s.y = random.nextFloat();
+
+                s.size =
+                        1f +
+                        random.nextFloat() * 3f;
+
+                s.speed =
+                        0.5f +
+                        random.nextFloat() * 2f;
+
+                stars.add(s);
+            }
+        }
+
+        // =========================
+        // BUILDINGS
+        // =========================
+
+        private void createBuildings() {
+
+            buildings.clear();
+
+            for (int i = 0; i < 50; i++) {
+
+                Building b = new Building();
+
+                b.x = i * 150;
+
+                b.width =
+                        80 +
+                        random.nextInt(100);
+
+                b.height =
+                        120 +
+                        random.nextInt(450);
+
+                b.color =
+                        Color.rgb(
+                                25 + random.nextInt(45),
+                                30 + random.nextInt(45),
+                                45 + random.nextInt(60)
+                        );
+
+                buildings.add(b);
+            }
+        }
+
+        // =========================
+        // START GAME
+        // =========================
+
+        private void startGame() {
+
+            screen = GAME;
+
+            raceStarted = false;
+            raceFinished = false;
+
+            countdown = 3;
+
+            countdownStart =
+                    System.currentTimeMillis();
+
+            score = 0;
+            distance = 0;
+
+            lives = 3;
+
+            combo = 0;
+            maxCombo = 0;
+
+            speed = 0;
+
+            nitro = 100;
+
+            xp = 0;
+            level = 1;
+
+            weather =
+                    random.nextInt(5);
+
+            roadType =
+                    random.nextInt(5);
+
+            playerX =
+                    getWidth() / 2f
+                            - playerWidth / 2f;
+
+            playerY =
+                    getHeight() * 0.70f;
+
+            traffic.clear();
+            coinList.clear();
+            particles.clear();
+
+            createTraffic();
+            createCoins();
+
+            lastTime =
+                    System.currentTimeMillis();
+
+            beep(
+                    ToneGenerator.TONE_PROP_BEEP
+            );
+
+            invalidate();
+        }
+
+        // =========================
+        // CREATE TRAFFIC
+        // =========================
+
+        private void createTraffic() {
+
+            traffic.clear();
+
+            for (int i = 0;
+                 i < trafficCount;
+                 i++) {
+
+                TrafficCar car =
+                        new TrafficCar();
+
+                car.width =
+                        60 +
+                        random.nextInt(30);
+
+                car.height =
+                        100 +
+                        random.nextInt(50);
+
+                car.lane =
+                        random.nextInt(3);
+
+                car.x =
+                        laneX(
+                                car.lane,
+                                car.width
+                        );
+
+                car.y =
+                        -200 -
+                        random.nextInt(2600);
+
+                car.speed =
+                        2.5f +
+                        random.nextFloat() * 5f;
+
+                car.color =
+                        carColors[
+                                random.nextInt(
+                                        carColors.length
+                                )
+                        ];
+
+                car.police =
+                        random.nextInt(15) == 0;
+
+                car.truck =
+                        random.nextInt(12) == 0;
+
+                car.damaged = false;
+
+                if (car.truck) {
+
+                    car.width = 90;
+                    car.height = 155;
+                }
+
+                traffic.add(car);
+            }
+        }
+
+        // =========================
+        // CREATE COINS
+        // =========================
+
+        private void createCoins() {
+
+            coinList.clear();
+
+            for (int i = 0; i < 14; i++) {
+
+                Coin c = new Coin();
+
+                c.radius = 14;
+
+                int lane =
+                        random.nextInt(3);
+
+                c.x =
+                        laneX(
+                                lane,
+                                c.radius * 2
+                        ) +
+                        c.radius;
+
+                c.y =
+                        -250 -
+                        random.nextInt(3000);
+
+                c.value =
+                        5 +
+                        random.nextInt(20);
+
+                c.collected = false;
+
+                coinList.add(c);
+            }
+        }
+
+        // =========================
+        // LANE X
+        // =========================
+
+        private float laneX(
+                int lane,
+                float objectWidth
+        ) {
+
+            float roadLeft =
+                    getWidth() * 0.20f;
+
+            float roadWidth =
+                    getWidth() * 0.60f;
+
+            float laneWidth =
+                    roadWidth / 3f;
+
+            return roadLeft
+                    +
+                    lane * laneWidth
+                    +
+                    laneWidth / 2f
+                    -
+                    objectWidth / 2f;
+        }
+
+        // =========================
+        // DRAW
+        // =========================
+
         @Override
-        protected void onDraw(Canvas canvas) {
+        protected void onDraw(
+                Canvas canvas
+        ) {
+
+            super.onDraw(canvas);
+
+            if (screen == MENU) {
+
+                drawMenu(canvas);
+
+            } else if (screen == GARAGE) {
+
+                drawGarage(canvas);
+
+            } else if (screen == GAME) {
+
+                drawGame(canvas);
+
+            } else if (screen == PAUSE) {
+
+                drawGame(canvas);
+                drawPause(canvas);
+
+            } else if (screen == RESULT) {
+
+                drawResult(canvas);
+
+            } else if (screen == SETTINGS) {
+
+                drawSettings(canvas);
+
+            } else if (screen == MISSIONS) {
+
+                drawMissions(canvas);
+            }
+
+            invalidate();
+        }
+
+        // =========================
+        // MENU
+        // =========================
+
+        private void drawMenu(
+                Canvas canvas
+        ) {
+
+            drawMenuBackground(canvas);
 
             int w = getWidth();
             int h = getHeight();
 
-            // BACKGROUND
-            p.setShader(new LinearGradient(
-                    0, 0,
-                    w, h,
-                    Color.rgb(4, 7, 18),
-                    Color.rgb(35, 55, 85),
-                    Shader.TileMode.CLAMP
-            ));
-
-            canvas.drawRect(0, 0, w, h, p);
-            p.setShader(null);
-
-            // GLOW
-            p.setColor(Color.argb(55, 0, 210, 255));
-            canvas.drawCircle(
-                    w / 2f,
-                    h / 2f,
-                    260,
-                    p
+            paint.setStyle(
+                    Paint.Style.FILL
             );
 
-            // TITLE
-            p.setTextAlign(Paint.Align.CENTER);
-            p.setTypeface(Typeface.create(
-                    "sans",
-                    Typeface.BOLD
-            ));
+            paint.setTextAlign(
+                    Paint.Align.CENTER
+            );
 
-            p.setColor(Color.WHITE);
-            p.setTextSize(55);
+            paint.setTypeface(
+                    Typeface.create(
+                            Typeface.DEFAULT,
+                            Typeface.BOLD
+                    )
+            );
+
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            paint.setTextSize(
+                    Math.min(w, h) * 0.13f
+            );
 
             canvas.drawText(
                     "DRAVIX",
                     w / 2f,
-                    65,
-                    p
+                    h * 0.17f,
+                    paint
             );
 
-            p.setTextSize(17);
-            p.setColor(Color.LTGRAY);
+            paint.setTextSize(
+                    Math.min(w, h) * 0.035f
+            );
+
+            paint.setColor(
+                    Color.rgb(
+                            80,
+                            210,
+                            255
+                    )
+            );
 
             canvas.drawText(
-                    "SELECT YOUR CAR",
+                    "STREET RACING",
                     w / 2f,
-                    92,
-                    p
+                    h * 0.23f,
+                    paint
             );
 
-            // CAR
-            float cx = w / 2f;
-            float cy = h / 2f - 20;
-
-            drawCar(canvas, cx, cy);
-
-            // CAR NAME
-            p.setColor(Color.WHITE);
-            p.setTextSize(25);
-
-            canvas.drawText(
-                    cars[selectedCar],
-                    cx,
-                    cy + 175,
-                    p
-            );
-
-            // LEFT BUTTON
-            p.setColor(Color.argb(210, 25, 30, 45));
-
-            canvas.drawRoundRect(
-                    25,
-                    h / 2f - 45,
-                    125,
-                    h / 2f + 45,
-                    20,
-                    20,
-                    p
-            );
-
-            p.setColor(Color.WHITE);
-            p.setTextSize(45);
-
-            canvas.drawText(
-                    "<",
-                    75,
-                    h / 2f + 15,
-                    p
-            );
-
-            // RIGHT BUTTON
-            p.setColor(Color.argb(210, 25, 30, 45));
-
-            canvas.drawRoundRect(
-                    w - 125,
-                    h / 2f - 45,
-                    w - 25,
-                    h / 2f + 45,
-                    20,
-                    20,
-                    p
-            );
-
-            p.setColor(Color.WHITE);
-
-            canvas.drawText(
-                    ">",
-                    w - 75,
-                    h / 2f + 15,
-                    p
-            );
-
-            // PLAY
-            playButton.set(
-                    cx - 145,
-                    h - 75,
-                    cx + 145,
-                    h - 15
-            );
-
-            p.setColor(Color.rgb(225, 35, 50));
-
-            canvas.drawRoundRect(
+            drawButton(
+                    canvas,
                     playButton,
-                    22,
-                    22,
-                    p
+                    w * 0.34f,
+                    h * 0.30f,
+                    w * 0.66f,
+                    h * 0.41f,
+                    "PLAY"
             );
 
-            p.setColor(Color.WHITE);
-            p.setTextSize(25);
+            drawButton(
+                    canvas,
+                    garageButton,
+                    w * 0.34f,
+                       h * 0.73f,
+                    w * 0.66f,
+                    h * 0.83f,
+                    "SETTINGS"
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.LEFT
+            );
+
+            paint.setTextSize(20);
+
+            paint.setColor(
+                    Color.YELLOW
+            );
 
             canvas.drawText(
-                    "PLAY",
-                    cx,
-                    h - 35,
-                    p
+                    "COINS: " + coins,
+                    25,
+                    35,
+                    paint
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.RIGHT
+            );
+
+            canvas.drawText(
+                    "BEST: " + bestScore,
+                    w - 25,
+                    35,
+                    paint
             );
         }
 
-        void drawCar(Canvas canvas, float cx, float cy) {
+        // =========================
+        // MENU BACKGROUND
+        // =========================
 
-            int color = carColors[selectedCar];
-
-            // SHADOW
-            p.setColor(Color.argb(100, 0, 0, 0));
-
-            canvas.drawOval(
-                    cx - 105,
-                    cy + 105,
-                    cx + 105,
-                    cy + 140,
-                    p
-            );
-
-            // BODY
-            p.setColor(color);
-
-            canvas.drawRoundRect(
-                    cx - 82,
-                    cy - 120,
-                    cx + 82,
-                    cy + 120,
-                    28,
-                    28,
-                    p
-            );
-
-            // ROOF
-            Path roof = new Path();
-
-            roof.moveTo(cx - 60, cy - 105);
-            roof.lineTo(cx - 42, cy - 145);
-            roof.lineTo(cx + 42, cy - 145);
-            roof.lineTo(cx + 60, cy - 105);
-            roof.close();
-
-            p.setColor(color);
-            canvas.drawPath(roof, p);
-
-            // WINDOWS
-            p.setColor(Color.rgb(10, 25, 38));
-
-            canvas.drawRoundRect(
-                    cx - 55,
-                    cy - 90,
-                    cx + 55,
-                    cy - 25,
-                    15,
-                    15,
-                    p
-            );
-
-            // FRONT WINDOW LINE
-            p.setColor(Color.argb(100, 255, 255, 255));
-            p.setStrokeWidth(4);
-
-            canvas.drawLine(
-                    cx,
-                    cy - 88,
-                    cx,
-                    cy - 28,
-                    p
-            );
-
-            // LIGHTS
-            p.setColor(Color.WHITE);
-
-            canvas.drawRoundRect(
-                    cx - 55,
-                    cy - 112,
-                    cx - 25,
-                    cy - 96,
-                    8,
-                    8,
-                    p
-            );
-
-            canvas.drawRoundRect(
-                    cx + 25,
-                    cy - 112,
-                    cx + 55,
-                    cy - 96,
-                    8,
-                    8,
-                    p
-            );
-
-            // REAR LIGHTS
-            p.setColor(Color.RED);
-
-            canvas.drawRoundRect(
-                    cx - 55,
-                    cy + 95,
-                    cx - 25,
-                    cy + 110,
-                    6,
-                    6,
-                    p
-            );
-
-            canvas.drawRoundRect(
-                    cx + 25,
-                    cy + 95,
-                    cx + 55,
-                    cy + 110,
-                    6,
-                    6,
-                    p
-            );
-
-            // WHEELS
-            p.setColor(Color.BLACK);
-
-            canvas.drawRoundRect(
-                    cx - 98,
-                    cy - 75,
-                    cx - 72,
-                    cy - 5,
-                    10,
-                    10,
-                    p
-            );
-
-            canvas.drawRoundRect(
-                    cx + 72,
-                    cy - 75,
-                    cx + 98,
-                    cy - 5,
-                    10,
-                    10,
-                    p
-            );
-
-            canvas.drawRoundRect(
-                    cx - 98,
-                    cy + 20,
-                    cx - 72,
-                    cy + 90,
-                    10,
-                    10,
-                    p
-            );
-
-            canvas.drawRoundRect(
-                    cx + 72,
-                    cy + 20,
-                    cx + 98,
-                    cy + 90,
-                    10,
-                    10,
-                    p
-            );
-
-            // SPECIAL NEON
-            if (selectedCar == 8) {
-
-                p.setColor(Color.CYAN);
-                p.setStyle(Paint.Style.STROKE);
-                p.setStrokeWidth(5);
-
-                canvas.drawRoundRect(
-                        cx - 88,
-                        cy - 128,
-                        cx + 88,
-                        cy + 128,
-                        30,
-                        30,
-                        p
-                );
-
-                p.setStyle(Paint.Style.FILL);
-            }
-
-            // POLICE STRIPE
-            if (selectedCar == 6) {
-
-                p.setColor(Color.WHITE);
-
-                canvas.drawRect(
-                        cx - 75,
-                        cy - 15,
-                        cx + 75,
-                        cy + 15,
-                        p
-                );
-            }
-
-            // DRAVIX X
-            if (selectedCar == 9) {
-
-                p.setColor(Color.WHITE);
-                p.setTextSize(28);
-                p.setTypeface(Typeface.DEFAULT_BOLD);
-
-                canvas.drawText(
-                        "X",
-                        cx,
-                        cy + 65,
-                        p
-                );
-            }
-        }
-
-        @Override
-        public boolean onTouchEvent(MotionEvent event) {
-
-            if (event.getAction() != MotionEvent.ACTION_DOWN) {
-                return true;
-            }
-
-            float x = event.getX();
-            float y = event.getY();
+        private void drawMenuBackground(
+                Canvas canvas
+        ) {
 
             int w = getWidth();
             int h = getHeight();
 
-            // LEFT
-            if (x < 140 &&
-                    y > h / 2f - 70 &&
-                    y < h / 2f + 70) {
+            paint.setShader(
+                    new LinearGradient(
+                            0,
+                            0,
+                            0,
+                            h,
+                            Color.rgb(
+                                    5,
+                                    8,
+                                    25
+                            ),
+                            Color.rgb(
+                                    20,
+                                    50,
+                                    90
+                            ),
+                            Shader.TileMode.CLAMP
+                    )
+            );
 
-                selectedCar--;
+            canvas.drawRect(
+                    0,
+                    0,
+                    w,
+                    h,
+                    paint
+            );
 
-                if (selectedCar < 0) {
-                    selectedCar = cars.length - 1;
+            paint.setShader(null);
+
+            paint.setColor(
+                    Color.rgb(
+                            20,
+                            30,
+                            45
+                    )
+            );
+
+            canvas.drawRect(
+                    0,
+                    h * 0.70f,
+                    w,
+                    h,
+                    paint
+            );
+
+            paint.setColor(
+                    Color.rgb(
+                            45,
+                            55,
+                            70
+                    )
+            );
+
+            for (int i = 0; i < 12; i++) {
+
+                float bx =
+                        i * w / 11f;
+
+                float bh =
+                        80 +
+                        randomBuildingHeight(i);
+
+                canvas.drawRect(
+                        bx,
+                        h * 0.70f - bh,
+                        bx + 70,
+                        h * 0.70f,
+                        paint
+                );
+            }
+
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            for (Star s : stars) {
+
+                canvas.drawCircle(
+                        s.x * w,
+                        s.y * h * 0.65f,
+                        s.size,
+                        paint
+                );
+            }
+        }
+
+        private float randomBuildingHeight(
+                int i
+        ) {
+
+            return 40 +
+                    (i * 37) % 150;
+        }
+
+        // =========================
+        // BUTTON
+        // =========================
+
+        private void drawButton(
+                Canvas canvas,
+                RectF rect,
+                float left,
+                float top,
+                float right,
+                float bottom,
+                String text
+        ) {
+
+            rect.set(
+                    left,
+                    top,
+                    right,
+                    bottom
+            );
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setColor(
+                    Color.argb(
+                            225,
+                            15,
+                            25,
+                            40
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    rect,
+                    22,
+                    22,
+                    paint
+            );
+
+            paint.setStyle(
+                    Paint.Style.STROKE
+            );
+
+            paint.setStrokeWidth(3);
+
+            paint.setColor(
+                    Color.rgb(
+                            50,
+                            190,
+                            255
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    rect,
+                    22,
+                    22,
+                    paint
+            );
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.CENTER
+            );
+
+            paint.setTypeface(
+                    Typeface.create(
+                            Typeface.DEFAULT,
+                            Typeface.BOLD
+                    )
+            );
+
+            paint.setTextSize(
+                    (bottom - top) * 0.34f
+            );
+
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            float cy =
+                    (top + bottom) / 2f
+                            -
+                            (
+                                    paint.ascent()
+                                            +
+                                    paint.descent()
+                            ) / 2f;
+
+            canvas.drawText(
+                    text,
+                    (left + right) / 2f,
+                    cy,
+                    paint
+            );
+        }
+
+        // =========================
+        // SOUND
+        // =========================
+
+        private void beep(
+                int toneType
+        ) {
+
+            if (tone == null) {
+                return;
+            }
+
+            try {
+
+                tone.startTone(
+                        toneType,
+                        100
+                );
+
+            } catch (Exception ignored) {
+            }
+        }
+
+        // =========================
+        // VIBRATION
+        // =========================
+
+        private void vibrate(
+                long duration
+        ) {
+
+            if (vibrator == null) {
+                return;
+            }
+
+            try {
+
+                if (Build.VERSION.SDK_INT >= 26) {
+
+                    vibrator.vibrate(
+                            android.os.VibrationEffect
+                                    .createOneShot(
+                                            duration,
+                                            android.os.VibrationEffect
+                                                    .DEFAULT_AMPLITUDE
+                                    )
+                    );
+
+                } else {
+
+                    vibrator.vibrate(
+                            duration
+                    );
                 }
 
-                vibrate();
-                invalidate();
-
-                return true;
+            } catch (Exception ignored) {
             }
+        }
 
-            // RIGHT
-            if (x > w - 140 &&
-                    y > h / 2f - 70 &&
-                    y < h / 2f + 70) {
+        // =========================
+        // BACK
+        // =========================
 
-                selectedCar++;
+        public void handleBack() {
 
-                if (selectedCar >= cars.length) {
-                    selectedCar = 0;
-                }
+            if (screen == GAME) {
 
-                vibrate();
-                invalidate();
+                screen = PAUSE;
 
-                return true;
+            } else if (screen == PAUSE) {
+
+                screen = GAME;
+
+            } else if (screen != MENU) {
+
+                screen = MENU;
             }
-
-            // PLAY
-            if (playButton.contains(x, y)) {
-
-                vibrate();
-
-                // Ҳоло интихобшудаи мошин омода аст.
-                // Қадами баъдӣ худи GAME мешавад.
-
-                return true;
-            }
-
-            return true;
         }
     }
-                        }
+                }
