@@ -3136,6 +3136,1049 @@ public class MainActivity extends Activity {
                 );
             }
         }
+                // =========================
+        // PLAYER MOVEMENT
+        // =========================
+
+        private void updatePlayer(float dt) {
+
+            float moveSpeed =
+                    14f
+                    +
+                    engineLevel * 1.2f;
+
+            if (leftPressed) {
+
+                playerX -=
+                        moveSpeed * dt;
+            }
+
+            if (rightPressed) {
+
+                playerX +=
+                        moveSpeed * dt;
+            }
+
+            // Nitro
+            if (nitroPressed && nitro > 0) {
+
+                speed =
+                        Math.min(
+                                28f + nitroLevel * 2f,
+                                speed + 0.35f
+                        );
+
+                nitro -=
+                        0.65f * dt;
+
+                if (nitro < 0) {
+                    nitro = 0;
+                }
+
+                if (Math.random() < 0.45) {
+
+                    addNitroParticle();
+                }
+
+            } else {
+
+                float normalSpeed =
+                        12f
+                        +
+                        engineLevel * 1.5f;
+
+                if (speed < normalSpeed) {
+
+                    speed +=
+                            0.12f * dt;
+                }
+
+                if (speed > normalSpeed) {
+
+                    speed -=
+                            0.18f * dt;
+                }
+
+                nitro +=
+                        0.10f * dt;
+
+                float maxNitro =
+                        100f;
+
+                if (nitro > maxNitro) {
+                    nitro = maxNitro;
+                }
+            }
+
+            // Keep car inside road
+            float roadLeft =
+                    getWidth() * 0.18f;
+
+            float roadRight =
+                    getWidth() * 0.82f
+                    -
+                    playerWidth;
+
+            if (playerX < roadLeft) {
+
+                playerX = roadLeft;
+            }
+
+            if (playerX > roadRight) {
+
+                playerX = roadRight;
+            }
+        }
+
+        // =========================
+        // TRAFFIC UPDATE
+        // =========================
+
+        private void updateTraffic(float dt) {
+
+            for (TrafficCar car : traffic) {
+
+                float trafficSpeed =
+                        speed * 0.55f
+                        +
+                        car.speed;
+
+                car.y +=
+                        trafficSpeed * dt;
+
+                // Small lane movement
+                if (!car.police &&
+                        !car.truck) {
+
+                    car.x +=
+                            Math.sin(
+                                    (
+                                            car.y
+                                            +
+                                            car.lane * 100
+                                    ) / 180.0
+                            ) * 0.12f * dt;
+                }
+
+                // Traffic passed screen
+                if (car.y >
+                        getHeight() + 220) {
+
+                    resetTrafficCar(
+                            car
+                    );
+
+                    score += 10;
+
+                    combo++;
+
+                    if (combo >
+                            maxCombo) {
+
+                        maxCombo =
+                                combo;
+                    }
+
+                    createPassParticles(
+                            car.x
+                            +
+                            car.width / 2f,
+                            getHeight()
+                            - 100
+                    );
+                }
+            }
+        }
+
+        // =========================
+        // RESET TRAFFIC
+        // =========================
+
+        private void resetTrafficCar(
+                TrafficCar car
+        ) {
+
+            int lane =
+                    random.nextInt(4);
+
+            car.lane =
+                    lane;
+
+            car.width =
+                    car.truck
+                            ? 105
+                            : 78;
+
+            car.height =
+                    car.truck
+                            ? 165
+                            : 135;
+
+            car.x =
+                    laneX(
+                            lane,
+                            car.width
+                    );
+
+            car.y =
+                    -180
+                    -
+                    random.nextInt(500);
+
+            car.speed =
+                    2f
+                    +
+                    random.nextFloat()
+                    * 4f;
+
+            car.damaged =
+                    false;
+        }
+
+        // =========================
+        // COIN UPDATE
+        // =========================
+
+        private void updateCoins(
+                float dt
+        ) {
+
+            for (Coin coin : coinList) {
+
+                if (coin.collected) {
+                    continue;
+                }
+
+                coin.y +=
+                        speed * 0.65f * dt;
+
+                if (coin.y >
+                        getHeight() + 80) {
+
+                    resetCoin(
+                            coin
+                    );
+                }
+            }
+        }
+
+        // =========================
+        // RESET COIN
+        // =========================
+
+        private void resetCoin(
+                Coin coin
+        ) {
+
+            int lane =
+                    random.nextInt(4);
+
+            coin.x =
+                    laneX(
+                            lane,
+                            0
+                    )
+                    +
+                    40;
+
+            coin.y =
+                    -100
+                    -
+                    random.nextInt(500);
+
+            coin.radius =
+                    18;
+
+            coin.value =
+                    10;
+
+            coin.collected =
+                    false;
+        }
+
+        // =========================
+        // PARTICLE UPDATE
+        // =========================
+
+        private void updateParticles(
+                float dt
+        ) {
+
+            for (int i =
+                    particles.size() - 1;
+                    i >= 0;
+                    i--) {
+
+                Particle p =
+                        particles.get(i);
+
+                p.x +=
+                        p.vx * dt;
+
+                p.y +=
+                        p.vy * dt;
+
+                p.vy +=
+                        0.25f * dt;
+
+                p.life -=
+                        0.035f * dt;
+
+                p.size *=
+                        0.992f;
+
+                if (p.life <= 0 ||
+                        p.size < 0.5f) {
+
+                    particles.remove(i);
+                }
+            }
+        }
+
+        // =========================
+        // NITRO PARTICLE
+        // =========================
+
+        private void addNitroParticle() {
+
+            Particle p =
+                    new Particle();
+
+            p.x =
+                    playerX
+                    +
+                    playerWidth / 2f
+                    +
+                    (
+                            random.nextFloat()
+                            - 0.5f
+                    ) * 25;
+
+            p.y =
+                    playerY
+                    +
+                    playerHeight;
+
+            p.vx =
+                    (
+                            random.nextFloat()
+                            - 0.5f
+                    ) * 2;
+
+            p.vy =
+                    3f
+                    +
+                    random.nextFloat()
+                    * 4f;
+
+            p.size =
+                    5f
+                    +
+                    random.nextFloat()
+                    * 7f;
+
+            p.life =
+                    1f;
+
+            p.color =
+                    random.nextBoolean()
+                            ? Color.YELLOW
+                            : Color.rgb(
+                                    255,
+                                    80,
+                                    10
+                            );
+
+            particles.add(p);
+        }
+
+        // =========================
+        // PASS PARTICLES
+        // =========================
+
+        private void createPassParticles(
+                float x,
+                float y
+        ) {
+
+            for (int i = 0;
+                    i < 8;
+                    i++) {
+
+                Particle p =
+                        new Particle();
+
+                p.x = x;
+                p.y = y;
+
+                p.vx =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 5f;
+
+                p.vy =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 5f;
+
+                p.size =
+                        3f
+                        +
+                        random.nextFloat()
+                        * 5f;
+
+                p.life =
+                        1f;
+
+                p.color =
+                        Color.WHITE;
+
+                particles.add(p);
+            }
+        }
+
+        // =========================
+        // CRASH PARTICLES
+        // =========================
+
+        private void createCrashParticles(
+                float x,
+                float y
+        ) {
+
+            for (int i = 0;
+                    i < 28;
+                    i++) {
+
+                Particle p =
+                        new Particle();
+
+                p.x = x;
+                p.y = y;
+
+                p.vx =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 12f;
+
+                p.vy =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 12f;
+
+                p.size =
+                        3f
+                        +
+                        random.nextFloat()
+                        * 8f;
+
+                p.life =
+                        1.2f;
+
+                int type =
+                        random.nextInt(3);
+
+                if (type == 0) {
+
+                    p.color =
+                            Color.YELLOW;
+
+                } else if (type == 1) {
+
+                    p.color =
+                            Color.rgb(
+                                    255,
+                                    100,
+                                    20
+                            );
+
+                } else {
+
+                    p.color =
+                            Color.LTGRAY;
+                }
+
+                particles.add(p);
+            }
+        }
+
+        // =========================
+        // TRAFFIC COLLISION
+        // =========================
+
+        private void checkTrafficCollisions() {
+
+            RectF playerRect =
+                    new RectF(
+                            playerX + 8,
+                            playerY + 10,
+                            playerX
+                                    +
+                                    playerWidth
+                                    - 8,
+                            playerY
+                                    +
+                                    playerHeight
+                                    - 10
+                    );
+
+            for (TrafficCar car :
+                    traffic) {
+
+                if (car.damaged) {
+                    continue;
+                }
+
+                RectF trafficRect =
+                        new RectF(
+                                car.x + 7,
+                                car.y + 8,
+                                car.x
+                                        +
+                                        car.width
+                                        - 7,
+                                car.y
+                                        +
+                                        car.height
+                                        - 8
+                        );
+
+                if (RectF.intersects(
+                        playerRect,
+                        trafficRect
+                )) {
+
+                    crash(
+                            car
+                    );
+
+                    break;
+                }
+            }
+        }
+
+        // =========================
+        // CRASH
+        // =========================
+
+        private void crash(
+                TrafficCar car
+        ) {
+
+            car.damaged =
+                    true;
+
+            lives--;
+
+            combo = 0;
+
+            score =
+                    Math.max(
+                            0,
+                            score - 100
+                    );
+
+            createCrashParticles(
+                    playerX
+                            +
+                            playerWidth / 2f,
+                    playerY
+                            +
+                            playerHeight / 2f
+            );
+
+            vibrate(
+                    180
+            );
+
+            beep(
+                    ToneGenerator
+                            .TONE_PROP_NACK
+            );
+
+            // Armor reduces crash penalty
+            if (armorLevel >= 3) {
+
+                lives++;
+
+                armorLevel = 2;
+            }
+
+            if (lives <= 0) {
+
+                raceFinished =
+                        true;
+
+                screen =
+                        RESULT;
+
+                return;
+            }
+
+            // Move traffic away
+            car.y =
+                    -300;
+
+            // Reset player
+            playerX =
+                    getWidth() / 2f
+                    -
+                    playerWidth / 2f;
+
+            speed =
+                    Math.max(
+                            7f,
+                            speed - 3f
+                    );
+        }
+
+        // =========================
+        // COIN COLLISION
+        // =========================
+
+        private void checkCoinCollisions() {
+
+            RectF playerRect =
+                    new RectF(
+                            playerX,
+                            playerY,
+                            playerX
+                                    +
+                                    playerWidth,
+                            playerY
+                                    +
+                                    playerHeight
+                    );
+
+            for (Coin coin :
+                    coinList) {
+
+                if (coin.collected) {
+                    continue;
+                }
+
+                RectF coinRect =
+                        new RectF(
+                                coin.x
+                                        -
+                                        coin.radius,
+                                coin.y
+                                        -
+                                        coin.radius,
+                                coin.x
+                                        +
+                                        coin.radius,
+                                coin.y
+                                        +
+                                        coin.radius
+                        );
+
+                if (RectF.intersects(
+                        playerRect,
+                        coinRect
+                )) {
+
+                    collectCoin(
+                            coin
+                    );
+                }
+            }
+        }
+
+        // =========================
+        // COLLECT COIN
+        // =========================
+
+        private void collectCoin(
+                Coin coin
+        ) {
+
+            coin.collected =
+                    true;
+
+            coins +=
+                    coin.value;
+
+            score +=
+                    coin.value * 5;
+
+            xp +=
+                    5;
+
+            combo++;
+
+            if (combo >
+                    maxCombo) {
+
+                maxCombo =
+                        combo;
+            }
+
+            createCoinParticles(
+                    coin.x,
+                    coin.y
+            );
+
+            beep(
+                    ToneGenerator
+                            .TONE_PROP_BEEP2
+            );
+        }
+
+        // =========================
+        // COIN PARTICLES
+        // =========================
+
+        private void createCoinParticles(
+                float x,
+                float y
+        ) {
+
+            for (int i = 0;
+                    i < 12;
+                    i++) {
+
+                Particle p =
+                        new Particle();
+
+                p.x = x;
+                p.y = y;
+
+                p.vx =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 7f;
+
+                p.vy =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 7f;
+
+                p.size =
+                        3f
+                        +
+                        random.nextFloat()
+                        * 4f;
+
+                p.life =
+                        1f;
+
+                p.color =
+                        Color.rgb(
+                                255,
+                                210,
+                                30
+                        );
+
+                particles.add(p);
+            }
+        }
+
+        // =========================
+        // LEVEL SYSTEM
+        // =========================
+
+        private void updateLevel() {
+
+            int needed =
+                    level * 100;
+
+            while (xp >= needed) {
+
+                xp -=
+                        needed;
+
+                level++;
+
+                coins +=
+                        50;
+
+                nitro =
+                        100;
+
+                createLevelParticles();
+
+                beep(
+                        ToneGenerator
+                                .TONE_PROP_ACK
+                );
+
+                needed =
+                        level * 100;
+            }
+        }
+
+        // =========================
+        // LEVEL PARTICLES
+        // =========================
+
+        private void createLevelParticles() {
+
+            float cx =
+                    getWidth() / 2f;
+
+            float cy =
+                    getHeight() / 2f;
+
+            for (int i = 0;
+                    i < 35;
+                    i++) {
+
+                Particle p =
+                        new Particle();
+
+                p.x = cx;
+                p.y = cy;
+
+                p.vx =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 15f;
+
+                p.vy =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 15f;
+
+                p.size =
+                        4f
+                        +
+                        random.nextFloat()
+                        * 6f;
+
+                p.life =
+                        1.5f;
+
+                p.color =
+                        random.nextBoolean()
+                                ? Color.YELLOW
+                                : Color.WHITE;
+
+                particles.add(p);
+            }
+        }
+
+        // =========================
+        // MISSIONS UPDATE
+        // =========================
+
+        private void updateMissions() {
+
+            for (Mission mission :
+                    missions) {
+
+                if (mission.completed) {
+                    continue;
+                }
+
+                String title =
+                        mission.title
+                                .toLowerCase();
+
+                if (title.contains(
+                        "1000"
+      )) {
+
+                    mission.progress =
+                            Math.min(
+                                    mission.target,
+                                    (int) distance
+                            );
+
+                } else if (
+                        title.contains(
+                                "20"
+                        )
+                        &&
+                        title.contains(
+                                "coin"
+                        )
+                ) {
+
+                    mission.progress =
+                            Math.min(
+                                    mission.target,
+                                    coins
+                            );
+
+                } else if (
+                        title.contains(
+                                "level 5"
+                        )
+                ) {
+
+                    mission.progress =
+                            Math.min(
+                                    mission.target,
+                                    level
+                            );
+
+                } else if (
+                        title.contains(
+                                "5000"
+                        )
+                ) {
+
+                    mission.progress =
+                            Math.min(
+                                    mission.target,
+                                    score
+                            );
+
+                } else if (
+                        title.contains(
+                                "10000"
+                        )
+                ) {
+
+                    mission.progress =
+                            Math.min(
+                                    mission.target,
+                                    (int) distance
+                            );
+                }
+
+                if (mission.progress >=
+                        mission.target) {
+
+                    mission.completed =
+                            true;
+
+                    coins +=
+                            mission.reward;
+
+                    xp +=
+                            25;
+
+                    beep(
+                            ToneGenerator
+                                    .TONE_PROP_ACK
+                    );
+                }
+            }
+        }
+
+        // =========================
+        // FINISH RACE
+        // =========================
+
+        private void finishRace() {
+
+            if (raceFinished) {
+                return;
+            }
+
+            raceFinished =
+                    true;
+
+            raceStarted =
+                    false;
+
+            speed = 0;
+
+            int reward =
+                    100
+                    +
+                    level * 25
+                    +
+                    combo * 5;
+
+            coins +=
+                    reward;
+
+            xp +=
+                    50;
+
+            createFinishParticles();
+
+            beep(
+                    ToneGenerator
+                            .TONE_PROP_ACK
+            );
+
+            vibrate(
+                    120
+            );
+
+            screen =
+                    RESULT;
+        }
+
+        // =========================
+        // FINISH PARTICLES
+        // =========================
+
+        private void createFinishParticles() {
+
+            float cx =
+                    getWidth() / 2f;
+
+            float cy =
+                    getHeight() / 2f;
+
+            for (int i = 0;
+                    i < 60;
+                    i++) {
+
+                Particle p =
+                        new Particle();
+
+                p.x = cx;
+                p.y = cy;
+
+                p.vx =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 18f;
+
+                p.vy =
+                        (
+                                random.nextFloat()
+                                - 0.5f
+                        ) * 18f;
+
+                p.size =
+                        3f
+                        +
+                        random.nextFloat()
+                        * 7f;
+
+                p.life =
+                        2f;
+
+                p.color =
+                        random.nextBoolean()
+                                ? Color.YELLOW
+                                : Color.WHITE;
+
+                particles.add(p);
+            }
+        }
+
+        // =========================
+        // FORCE REDRAW
+        // =========================
+
+        private void gameRefresh() {
+
+            if (Build.VERSION.SDK_INT >= 16) {
+
+                postInvalidateOnAnimation();
+
+            } else {
+
+                invalidate();
+            }
+                                     }
         private void beep(
                 int toneType
         ) {
