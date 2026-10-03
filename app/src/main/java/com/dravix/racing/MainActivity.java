@@ -2143,6 +2143,999 @@ public class MainActivity extends Activity {
                     paint
             );
                         }
+                // =========================
+        // TRAFFIC DRAWING
+        // =========================
+
+        private void drawTraffic(Canvas canvas) {
+
+            for (TrafficCar car : traffic) {
+
+                drawTrafficCar(
+                        canvas,
+                        car
+                );
+            }
+        }
+
+        // =========================
+        // TRAFFIC CAR
+        // =========================
+
+        private void drawTrafficCar(
+                Canvas canvas,
+                TrafficCar car
+        ) {
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            // Shadow
+            paint.setColor(
+                    Color.argb(
+                            90,
+                            0,
+                            0,
+                            0
+                    )
+            );
+
+            canvas.drawOval(
+                    car.x - 8,
+                    car.y + car.height - 8,
+                    car.x + car.width + 8,
+                    car.y + car.height + 10,
+                    paint
+            );
+
+            // Body
+            paint.setColor(
+                    car.damaged
+                            ? Color.DKGRAY
+                            : car.color
+            );
+
+            canvas.drawRoundRect(
+                    car.x,
+                    car.y,
+                    car.x + car.width,
+                    car.y + car.height,
+                    14,
+                    14,
+                    paint
+            );
+
+            // Roof
+            paint.setColor(
+                    Color.rgb(
+                            30,
+                            35,
+                            45
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    car.x + car.width * 0.18f,
+                    car.y + car.height * 0.18f,
+                    car.x + car.width * 0.82f,
+                    car.y + car.height * 0.58f,
+                    12,
+                    12,
+                    paint
+            );
+
+            // Windows
+            paint.setColor(
+                    Color.rgb(
+                            80,
+                            150,
+                            190
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    car.x + car.width * 0.25f,
+                    car.y + car.height * 0.23f,
+                    car.x + car.width * 0.75f,
+                    car.y + car.height * 0.48f,
+                    7,
+                    7,
+                    paint
+            );
+
+            // Wheels
+            paint.setColor(
+                    Color.BLACK
+            );
+
+            canvas.drawRoundRect(
+                    car.x - 5,
+                    car.y + car.height * 0.18f,
+                    car.x + 7,
+                    car.y + car.height * 0.42f,
+                    5,
+                    5,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    car.x + car.width - 7,
+                    car.y + car.height * 0.18f,
+                    car.x + car.width + 5,
+                    car.y + car.height * 0.42f,
+                    5,
+                    5,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    car.x - 5,
+                    car.y + car.height * 0.68f,
+                    car.x + 7,
+                    car.y + car.height * 0.92f,
+                    5,
+                    5,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    car.x + car.width - 7,
+                    car.y + car.height * 0.68f,
+                    car.x + car.width + 5,
+                    car.y + car.height * 0.92f,
+                    5,
+                    5,
+                    paint
+            );
+
+            // Front lights
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            canvas.drawRoundRect(
+                    car.x + 10,
+                    car.y + 8,
+                    car.x + 25,
+                    car.y + 18,
+                    4,
+                    4,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    car.x + car.width - 25,
+                    car.y + 8,
+                    car.x + car.width - 10,
+                    car.y + 18,
+                    4,
+                    4,
+                    paint
+            );
+
+            // Back lights
+            paint.setColor(
+                    Color.RED
+            );
+
+            canvas.drawRect(
+                    car.x + 10,
+                    car.y + car.height - 18,
+                    car.x + 25,
+                    car.y + car.height - 8,
+                    paint
+            );
+
+            canvas.drawRect(
+                    car.x + car.width - 25,
+                    car.y + car.height - 18,
+                    car.x + car.width - 10,
+                    car.y + car.height - 8,
+                    paint
+            );
+
+            // Police lights
+            if (car.police) {
+
+                paint.setColor(
+                        Color.BLUE
+                );
+
+                canvas.drawRect(
+                        car.x + car.width * 0.30f,
+                        car.y + car.height * 0.10f,
+                        car.x + car.width * 0.50f,
+                        car.y + car.height * 0.15f,
+                        paint
+                );
+
+                paint.setColor(
+                        Color.RED
+                );
+
+                canvas.drawRect(
+                        car.x + car.width * 0.50f,
+                        car.y + car.height * 0.10f,
+                        car.x + car.width * 0.70f,
+                        car.y + car.height * 0.15f,
+                        paint
+                );
+            }
+
+            // Truck marking
+            if (car.truck) {
+
+                paint.setColor(
+                        Color.rgb(
+                                240,
+                                200,
+                                50
+                        )
+                );
+
+                paint.setTextAlign(
+                        Paint.Align.CENTER
+                );
+
+                paint.setTextSize(13);
+
+                canvas.drawText(
+                        "TRUCK",
+                        car.x + car.width / 2f,
+                        car.y + car.height * 0.65f,
+                        paint
+                );
+            }
+        }
+
+        // =========================
+        // COINS DRAWING
+        // =========================
+
+        private void drawCoins(Canvas canvas) {
+
+            for (Coin coin : coinList) {
+
+                if (coin.collected) {
+                    continue;
+                }
+
+                drawCoin(
+                        canvas,
+                        coin
+                );
+            }
+        }
+
+        // =========================
+        // COIN
+        // =========================
+
+        private void drawCoin(
+                Canvas canvas,
+                Coin coin
+        ) {
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setColor(
+                    Color.rgb(
+                            255,
+                            190,
+                            20
+                    )
+            );
+
+            canvas.drawCircle(
+                    coin.x,
+                    coin.y,
+                    coin.radius,
+                    paint
+            );
+
+            paint.setStyle(
+                    Paint.Style.STROKE
+            );
+
+            paint.setStrokeWidth(3);
+
+            paint.setColor(
+                    Color.rgb(
+                            255,
+                            235,
+                            100
+                    )
+            );
+
+            canvas.drawCircle(
+                    coin.x,
+                    coin.y,
+                    coin.radius - 3,
+                    paint
+            );
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setTextAlign(
+                    Paint.Align.CENTER
+            );
+
+            paint.setTextSize(
+                    coin.radius
+            );
+
+            paint.setTypeface(
+                    Typeface.DEFAULT_BOLD
+            );
+
+            paint.setColor(
+                    Color.rgb(
+                            120,
+                            80,
+                            0
+                    )
+            );
+
+            canvas.drawText(
+                    "$",
+                    coin.x,
+                    coin.y
+                            -
+                            (
+                                    paint.ascent()
+                                            +
+                                    paint.descent()
+                            ) / 2f,
+                    paint
+            );
+        }
+
+        // =========================
+        // PLAYER
+        // =========================
+
+        private void drawPlayer(
+                Canvas canvas
+        ) {
+
+            drawCar(
+                    canvas,
+                    playerX,
+                    playerY,
+                    playerWidth,
+                    playerHeight,
+                    carColors[selectedCar],
+                    true
+            );
+
+            if (nitroPressed &&
+                    nitro > 0) {
+
+                drawNitroFlame(
+                        canvas
+                );
+            }
+        }
+
+        // =========================
+        // PLAYER CAR
+        // =========================
+
+        private void drawCar(
+                Canvas canvas,
+                float x,
+                float y,
+                float width,
+                float height,
+                int color,
+                boolean player
+        ) {
+
+            // Shadow
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            paint.setColor(
+                    Color.argb(
+                            100,
+                            0,
+                            0,
+                            0
+                    )
+            );
+
+            canvas.drawOval(
+                    x - 8,
+                    y + height - 8,
+                    x + width + 8,
+                    y + height + 12,
+                    paint
+            );
+
+            // Main body
+            paint.setColor(
+                    color
+            );
+
+            canvas.drawRoundRect(
+                    x,
+                    y,
+                    x + width,
+                    y + height,
+                    18,
+                    18,
+                    paint
+            );
+
+            // Hood
+            paint.setColor(
+                    Color.argb(
+                            90,
+                            255,
+                            255,
+                            255
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    x + width * 0.16f,
+                    y + height * 0.05f,
+                    x + width * 0.84f,
+                    y + height * 0.30f,
+                    12,
+                    12,
+                    paint
+            );
+
+            // Roof
+            paint.setColor(
+                    Color.rgb(
+                            25,
+                            30,
+                            40
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    x + width * 0.18f,
+                    y + height * 0.25f,
+                    x + width * 0.82f,
+                    y + height * 0.65f,
+                    14,
+                    14,
+                    paint
+            );
+
+            // Front glass
+            paint.setColor(
+                    Color.rgb(
+                            90,
+                            170,
+                            210
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    x + width * 0.27f,
+                    y + height * 0.29f,
+                    x + width * 0.73f,
+                    y + height * 0.47f,
+                    7,
+                    7,
+                    paint
+            );
+
+            // Rear glass
+            paint.setColor(
+                    Color.rgb(
+                            55,
+                            115,
+                            150
+                    )
+            );
+
+            canvas.drawRoundRect(
+                    x + width * 0.29f,
+                    y + height * 0.49f,
+                    x + width * 0.71f,
+                    y + height * 0.61f,
+                    6,
+                    6,
+                    paint
+            );
+
+            // Wheels
+            paint.setColor(
+                    Color.BLACK
+            );
+
+            canvas.drawRoundRect(
+                    x - 7,
+                    y + height * 0.16f,
+                    x + 8,
+                    y + height * 0.39f,
+                    6,
+                    6,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    x + width - 8,
+                    y + height * 0.16f,
+                    x + width + 7,
+                    y + height * 0.39f,
+                    6,
+                    6,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    x - 7,
+                    y + height * 0.67f,
+                    x + 8,
+                    y + height * 0.90f,
+                    6,
+                    6,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    x + width - 8,
+                    y + height * 0.67f,
+                    x + width + 7,
+                    y + height * 0.90f,
+                    6,
+                    6,
+                    paint
+            );
+
+            // Headlights
+            paint.setColor(
+                    Color.WHITE
+            );
+
+            canvas.drawRoundRect(
+                    x + 10,
+                    y + 8,
+                    x + 29,
+                    y + 22,
+                    6,
+                    6,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    x + width - 29,
+                    y + 8,
+                    x + width - 10,
+                    y + 22,
+                    6,
+                    6,
+                    paint
+            );
+
+            // Rear lights
+            paint.setColor(
+                    Color.RED
+            );
+
+            canvas.drawRoundRect(
+                    x + 10,
+                    y + height - 22,
+                    x + 29,
+                    y + height - 8,
+                    5,
+                    5,
+                    paint
+            );
+
+            canvas.drawRoundRect(
+                    x + width - 29,
+                    y + height - 22,
+                    x + width - 10,
+                    y + height - 8,
+                    5,
+                    5,
+                    paint
+            );
+
+            // Center stripe
+            paint.setColor(
+                    Color.argb(
+                            150,
+                            255,
+                            255,
+                            255
+                    )
+            );
+
+            canvas.drawRect(
+                    x + width * 0.45f,
+                    y + 5,
+                    x + width * 0.55f,
+                    y + height - 5,
+                    paint
+            );
+
+            // Player glow
+            if (player) {
+
+                paint.setStyle(
+                        Paint.Style.STROKE
+                );
+
+                paint.setStrokeWidth(3);
+
+                paint.setColor(
+                        Color.argb(
+                                150,
+                                50,
+                                220,
+                                255
+                        )
+                );
+
+                canvas.drawRoundRect(
+                        x - 3,
+                        y - 3,
+                        x + width + 3,
+                        y + height + 3,
+                        20,
+                        20,
+                        paint
+                );
+
+                paint.setStyle(
+                        Paint.Style.FILL
+                );
+            }
+        }
+
+        // =========================
+        // NITRO FLAME
+        // =========================
+
+        private void drawNitroFlame(
+                Canvas canvas
+        ) {
+
+            float center =
+                    playerX
+                    +
+                    playerWidth / 2f;
+
+            float bottom =
+                    playerY
+                    +
+                    playerHeight;
+
+            Path flame =
+                    new Path();
+
+            flame.moveTo(
+                    center - 18,
+                    bottom - 2
+            );
+
+            flame.lineTo(
+                    center - 8,
+                    bottom + 45
+            );
+
+            flame.lineTo(
+                    center,
+                    bottom + 25
+            );
+
+            flame.lineTo(
+                    center + 8,
+                    bottom + 45
+            );
+
+            flame.lineTo(
+                    center + 18,
+                    bottom - 2
+            );
+
+            flame.close();
+
+            paint.setColor(
+                    Color.rgb(
+                            255,
+                            90,
+                            10
+                    )
+            );
+
+            canvas.drawPath(
+                    flame,
+                    paint
+            );
+
+            Path inner =
+                    new Path();
+
+            inner.moveTo(
+                    center - 8,
+                    bottom
+            );
+
+            inner.lineTo(
+                    center,
+                    bottom + 28
+            );
+
+            inner.lineTo(
+                    center + 8,
+                    bottom
+            );
+
+            inner.close();
+
+            paint.setColor(
+                    Color.YELLOW
+            );
+
+            canvas.drawPath(
+                    inner,
+                    paint
+            );
+        }
+
+        // =========================
+        // PARTICLES
+        // =========================
+
+        private void drawParticles(
+                Canvas canvas
+        ) {
+
+            paint.setStyle(
+                    Paint.Style.FILL
+            );
+
+            for (Particle p : particles) {
+
+                if (p.life <= 0) {
+                    continue;
+                }
+
+                paint.setColor(
+                        p.color
+                );
+
+                canvas.drawCircle(
+                        p.x,
+                        p.y,
+                        p.size,
+                        paint
+                );
+            }
+        }
+
+        // =========================
+        // RAIN
+        // =========================
+
+        private void drawRain(
+                Canvas canvas
+        ) {
+
+            if (weather != RAIN) {
+                return;
+            }
+
+            paint.setColor(
+                    Color.argb(
+                            130,
+                            180,
+                            220,
+                            255
+                    )
+            );
+
+            paint.setStrokeWidth(2);
+
+            int w = getWidth();
+            int h = getHeight();
+
+            for (int i = 0; i < 100; i++) {
+
+                float x =
+                        (i * 97
+                                +
+                                distance * 4)
+                                % w;
+
+                float y =
+                        (i * 53
+                                +
+                                distance * 7)
+               % h;
+
+                canvas.drawLine(
+                        x,
+                        y,
+                        x - 8,
+                        y + 25,
+                        paint
+                );
+            }
+        }
+
+        // =========================
+        // UPDATE GAME
+        // =========================
+
+        private void updateGame() {
+
+            long now =
+                    System.currentTimeMillis();
+
+            float dt =
+                    (now - lastTime)
+                            / 16.0f;
+
+            if (dt < 0.5f) {
+                dt = 0.5f;
+            }
+
+            if (dt > 3f) {
+                dt = 3f;
+            }
+
+            lastTime = now;
+
+            if (!raceStarted) {
+
+                updateCountdown();
+
+                return;
+            }
+
+            if (raceFinished) {
+                return;
+            }
+
+            updatePlayer(dt);
+
+            updateTraffic(dt);
+
+            updateCoins(dt);
+
+            updateParticles(dt);
+
+            checkTrafficCollisions();
+
+            checkCoinCollisions();
+
+            updateLevel();
+
+            updateMissions();
+
+            distance +=
+                    speed * dt * 0.55f;
+
+            score +=
+                    (int)
+                            (speed * dt);
+
+            if (score > bestScore) {
+                bestScore = score;
+            }
+
+            if (distance >= 10000) {
+
+                finishRace();
+            }
+        }
+
+        // =========================
+        // COUNTDOWN
+        // =========================
+
+        private void updateCountdown() {
+
+            long elapsed =
+                    System.currentTimeMillis()
+                            -
+                    countdownStart;
+
+            int current =
+                    3 -
+                    (int)
+                            (elapsed / 1000);
+
+            if (current > 0) {
+
+                if (current != countdown) {
+
+                    countdown = current;
+
+                    beep(
+                            ToneGenerator
+                                    .TONE_PROP_BEEP
+                    );
+                }
+
+            } else {
+
+                countdown = 0;
+
+                raceStarted = true;
+
+                beep(
+                        ToneGenerator
+                                .TONE_PROP_ACK
+                );
+            }
+        }
+
+        // =========================
+        // COUNTDOWN DRAW
+        // =========================
+
+        private void drawCountdown(
+                Canvas canvas
+        ) {
+
+            int w = getWidth();
+            int h = getHeight();
+
+            paint.setTextAlign(
+                    Paint.Align.CENTER
+            );
+
+            paint.setTypeface(
+                    Typeface.create(
+                            Typeface.DEFAULT,
+                            Typeface.BOLD
+                    )
+            );
+
+            if (countdown > 0) {
+
+                paint.setTextSize(
+                        Math.min(w, h) * 0.20f
+                );
+
+                paint.setColor(
+                        Color.WHITE
+                );
+
+                canvas.drawText(
+                        String.valueOf(
+                                countdown
+                        ),
+                        w / 2f,
+                        h / 2f,
+                        paint
+                );
+
+            } else {
+
+                paint.setTextSize(
+                        Math.min(w, h) * 0.12f
+                );
+
+                paint.setColor(
+                        Color.GREEN
+                );
+
+                canvas.drawText(
+                        "GO!",
+                        w / 2f,
+                        h / 2f,
+                        paint
+                );
+            }
+        }
         private void beep(
                 int toneType
         ) {
